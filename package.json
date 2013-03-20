@@ -9,6 +9,7 @@
     "debug": "~0.7.2",
     "findit": "~0.1.2",
     "mkdirp": "~0.3.5",
-    "underscore": "~1.4.4"
+    "underscore": "~1.4.4",
+    "set": "git://github.com/jdubie/set.git"
   }
 }

@@ -2,6 +2,7 @@ fs           = require 'fs'
 path         = require 'path'
 mkdirp       = require 'mkdirp'
 CoffeeScript = require 'coffee-script'
+Set          = require 'set'
 debug        = require 'debug'
 findit       = require 'findit'
 _            = require 'underscore'
@@ -14,21 +15,37 @@ exports = module.exports = class Compiler
     # create lib dir
     mkdirp.sync(path.join(@dir, 'lib'))
 
-    # find all coffee-script files
-    @findSourceFiles (err, files) =>
-      @files = files
+    # watchers
+    @watchers = []
 
-      # TODO handle error
+    # find all coffee-script files
+    @compileAll()
+
+    # listen for addition of new files
+    # TODO generalize this beyond just src
+    # TODO this doesn't work for adding recursive folders
+    dirWatcher = fs.watch(path.join(@dir, 'src'))
+    dirWatcher.on 'change', (event, filename) =>
+      return unless event is 'rename'
+      debug 'new file', event, filename
+      @compileAll()
+
+  compileAll: (callback) ->
+
+    # free all old watchers
+    watcher.close() for watcher in @watchers
+
+    # initialize watched files to empty set
+    @files = new Set()
+
+    @findSourceFiles (err, files) =>
+      @files.addAll(files)
+
+      # watch each file
       files.forEach(@watchFile)
 
       # compile everything on start so in compiled state
       files.forEach(@compile)
-
-      # listen for addition of new files
-      # TODO generalize this beyond just src
-      dirWatcher = fs.watch(path.join(@dir, 'src'))
-      dirWatcher.on 'change', (event, filename) ->
-        debug 'dirWatcher', event, filename
 
   findSourceFiles: (callback) ->
     files = []
@@ -46,7 +63,7 @@ exports = module.exports = class Compiler
 
   watchFile: (file) =>
     watcher = fs.watch(file)
-    #watcher.on 'change', (event, filename) ->
+    @watchers.push(watcher) # remember watch so can close later
     watcher.on 'change', (event) =>
       return unless event is 'change'
       # TODO debounce events (3 change events fire for a vim save)
@@ -62,7 +79,6 @@ exports = module.exports = class Compiler
       fs.writeFileSync(dst, js)
     else
       @files = _(@files).filter (file) -> file isnt file
-      console.log @files
 
   getLibPath: (file) ->
     relPath = file.split(@dir)[1]
