@@ -1,15 +1,19 @@
-events = require 'events'
-path   = require 'path'
-debug  = require 'debug'
-findit = require 'findit'
-async  = require 'async'
-mdeps  = require 'module-deps'
-Mocha  = require 'mocha'
+events      = require 'events'
+path        = require 'path'
+debug       = require 'debug'
+findit      = require 'findit'
+async       = require 'async'
+mdeps       = require 'module-deps'
+Mocha       = require 'mocha'
+DefaultDict = require 'defaultdict'
+Set         = require 'set'
+h           = require './helper'
 
 debug = debug('maple/tester')
 
 exports = module.exports = class Tester extends events.EventEmitter
   constructor: (@dir, @include=/.*\/lib\/.*\.js$/, @exclude=/node_modules/) ->
+    @deps = new DefaultDict(() -> new Set())
 
   start: =>
     async.series [
@@ -35,20 +39,28 @@ exports = module.exports = class Tester extends events.EventEmitter
   testAll: (callback) =>
     @findSourceFiles (files) =>
       async.parallel [
-        #@updateDependants(files)
+        @updateDependants(files)
         @testFiles(files)
       ], callback
 
-  updateDependants: (files) ->
+  updateDependants: (files) =>
     (callback) =>
       async.map(files, @fileDependants, callback)
 
-  fileDependants: (file, callback) ->
-    debug 'updateDependants', file
-    deps = mdeps(file)
-    deps.on 'data', (data) ->
-      debug 'data', data.id, data.deps
+  fileDependants: (filename, callback) =>
+    debug 'updateDependants', filename
+    deps = mdeps(filename)
+    deps.on 'data', (data) =>
+      if @validFile(data.id)# and data.id isnt filename
+        @addDependency(filename, data.id)
+        #console.log h.relName({filename, @dir}), 'depends on', h.relName({filename: data.id, @dir})
     deps.on('close', callback)
+
+  # a depends on b
+  #
+  # b changed so test and b and a
+  addDependency: (a, b) ->
+    @deps.get(b).add(a)
 
   testDepedencies: (files) ->
     (callback) ->
@@ -63,6 +75,7 @@ exports = module.exports = class Tester extends events.EventEmitter
       callback(files)
 
   validFile: (file) ->
+    file = file.toString('utf8')
     return false if file.match(@exclude)
     return true if file.match(@include)
     false
@@ -76,7 +89,7 @@ exports = module.exports = class Tester extends events.EventEmitter
       async.map(files, @testFile, callback)
 
   relName: (filename) ->
-    filename.replace(@dir, '')
+    h.relName({filename, @dir})
 
   testName: (filename) ->
     relName = @relName(filename)
