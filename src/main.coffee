@@ -4,6 +4,7 @@ mocha     = require 'mocha'
 express   = require 'express'
 commander = require 'commander'
 debug     = require 'debug'
+Watcher   = require './watcher'
 Tester    = require './tester'
 Compiler  = require './compiler'
 
@@ -15,8 +16,9 @@ unless fs.existsSync(dir)
   console.error "Path does not exist: #{dir}"
   process.exit()
 
-compiler = new Compiler(dir)
-tester   = new Tester(dir)
+watcher  = new Watcher(dir)
+compiler = new Compiler(dir, watcher)
+tester   = new Tester(dir, watcher)
 
 compiler.on('ready', tester.start)
 compiler.start()

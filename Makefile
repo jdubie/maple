@@ -1,4 +1,6 @@
-all:
+all: build run
+
+run:
 	DEBUG=maple/* node lib/main.js
 
 build:

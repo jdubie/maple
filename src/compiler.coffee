@@ -2,7 +2,6 @@ fs           = require 'fs'
 events       = require 'events'
 path         = require 'path'
 mkdirp       = require 'mkdirp'
-watch        = require 'node-watch'
 CoffeeScript = require 'coffee-script'
 debug        = require 'debug'
 findit       = require 'findit'
@@ -11,7 +10,7 @@ _            = require 'underscore'
 debug = debug('maple/compiler')
 
 exports = module.exports = class Compiler extends events.EventEmitter
-  constructor: (@dir, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
+  constructor: (@dir, @watcher, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
 
   event: (eventname, args...) ->
     debug("#{eventname}: #{args.join(' ')}")
@@ -23,7 +22,7 @@ exports = module.exports = class Compiler extends events.EventEmitter
       @event('ready')
 
     # watch everything
-    watch(@dir, @compile)
+    @watcher.on('change', @compile)
 
   compileAll: (callback) ->
     @findSourceFiles (err, files) =>
