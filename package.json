@@ -10,8 +10,8 @@
     "findit": "~0.1.2",
     "mkdirp": "~0.3.5",
     "underscore": "~1.4.4",
-    "set": "git://github.com/jdubie/set.git",
     "async": "~0.2.6",
-    "should": "~1.2.2"
+    "should": "~1.2.2",
+    "module-deps": "~0.5.2"
   }
 }

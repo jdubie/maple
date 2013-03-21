@@ -8,17 +8,10 @@ debug        = require 'debug'
 findit       = require 'findit'
 _            = require 'underscore'
 
-debug = debug('compiler')
+debug = debug('maple/compiler')
 
 exports = module.exports = class Compiler extends events.EventEmitter
   constructor: (@dir, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
-
-    # create `lib` directory
-    mkdirp.sync(path.join(@dir, 'lib'))
-
-    # create `test_lib` directory if `test_src` exists
-    if path.existsSync(path.join(@dir, 'test_src'))
-      mkdirp.sync(path.join(@dir, 'test_lib'))
 
   event: (eventname, args...) ->
     debug("#{eventname}: #{args.join(' ')}")
@@ -61,8 +54,14 @@ exports = module.exports = class Compiler extends events.EventEmitter
   getLibPath: (file) ->
     relPath = file.split(@dir)[1]
     srcPath = relPath.split(path.sep)[2..].join(path.sep)
-    dstPath = path.join(@dir, 'lib', srcPath)
+    dstPath = path.join(@dir, Compiler.getLib(relPath), srcPath)
     path.join(path.dirname(dstPath), path.basename(dstPath, '.coffee') + '.js')
+
+  @getLib: (file) ->
+    switch file.split(path.sep)[1]
+      when 'src' then 'lib'
+      when 'test_src' then 'test'
+      else throw new Error("invalid folder: #{file}")
 
   findSourceFiles: (callback) ->
     files = []

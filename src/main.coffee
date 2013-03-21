@@ -7,7 +7,7 @@ debug     = require 'debug'
 Tester    = require './tester'
 Compiler  = require './compiler'
 
-debug = debug('main')
+debug = debug('maple/main')
 
 dir = process.argv[2] ? process.cwd()
 

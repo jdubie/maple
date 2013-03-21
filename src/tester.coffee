@@ -3,9 +3,10 @@ path   = require 'path'
 debug  = require 'debug'
 findit = require 'findit'
 async  = require 'async'
+mdeps  = require 'module-deps'
 Mocha  = require 'mocha'
 
-debug = debug('tester')
+debug = debug('maple/tester')
 
 exports = module.exports = class Tester extends events.EventEmitter
   constructor: (@dir, @include=/.*\/lib\/.*\.js$/, @exclude=/node_modules/) ->
@@ -39,8 +40,15 @@ exports = module.exports = class Tester extends events.EventEmitter
       ], callback
 
   updateDependants: (files) ->
-    (callback) ->
-      debug 'updateDependants', files
+    (callback) =>
+      async.map(files, @fileDependants, callback)
+
+  fileDependants: (file, callback) ->
+    debug 'updateDependants', file
+    deps = mdeps(file)
+    deps.on 'data', (data) ->
+      debug 'data', data.id, data.deps
+    deps.on('close', callback)
 
   testDepedencies: (files) ->
     (callback) ->
@@ -77,15 +85,14 @@ exports = module.exports = class Tester extends events.EventEmitter
 
   testFile: (file, callback) =>
     debug "testing #{@testName(file)}"
-    return callback()
 
-    mocha = new Mocha
+    mocha = new Mocha(reporter: 'base')
 
     mocha.addFile(file)
     runner = mocha.run()
-    runner.on 'pass', (test) ->
+    runner.on 'pass', (test) =>
       @event 'pass', test
-    runner.on 'fail', (test, err) ->
+    runner.on 'fail', (test, err) =>
       @event 'fail', test, err
     runner.on('end', callback)
 
