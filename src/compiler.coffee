@@ -1,4 +1,5 @@
 fs           = require 'fs'
+events       = require 'events'
 path         = require 'path'
 mkdirp       = require 'mkdirp'
 watch        = require 'node-watch'
@@ -9,14 +10,24 @@ _            = require 'underscore'
 
 debug = debug('compiler')
 
-exports = module.exports = class Compiler
+exports = module.exports = class Compiler extends events.EventEmitter
   constructor: (@dir, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
 
-    # create lib dir
+    # create `lib` directory
     mkdirp.sync(path.join(@dir, 'lib'))
 
+    # create `test_lib` directory if `test_src` exists
+    if path.existsSync(path.join(@dir, 'test_src'))
+      mkdirp.sync(path.join(@dir, 'test_lib'))
+
+  event: (eventname, args...) ->
+    debug("#{eventname}: #{args.join(' ')}")
+    @emit(eventname, args)
+
+  start: ->
     # compile everything in beginning
-    @compileAll()
+    @compileAll =>
+      @event('ready')
 
     # watch everything
     watch(@dir, @compile)
@@ -37,7 +48,7 @@ exports = module.exports = class Compiler
     return unless @validFile(file)
 
     if fs.existsSync(file)
-      debug "compiling: #{@relPath(file)}"
+      @event('compiled', @relPath(file))
       coffee = fs.readFileSync(file, 'utf8')
       js = CoffeeScript.compile(coffee)
       dst = @getLibPath(file)

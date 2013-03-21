@@ -4,36 +4,22 @@ mocha     = require 'mocha'
 express   = require 'express'
 commander = require 'commander'
 debug     = require 'debug'
-#Tester    = require './tester'
+Tester    = require './tester'
 Compiler  = require './compiler'
 
 debug = debug('main')
 
-#out = fs.createWriteStream('t.out')
-#
-#process.stdout.pipe(out)
-#process.stderr.pipe(out)
-#
-#m = new mocha(reporter: 'json-stream')
-#m.addFile('test/spec')
-#
-#m.run()
-
 dir = process.argv[2] ? process.cwd()
-
 
 unless fs.existsSync(dir)
   console.error "Path does not exist: #{dir}"
   process.exit()
 
-debug 'watching', dir
-
-#watcher = fs.watch(dir)
-
 compiler = new Compiler(dir)
-#tester   = new Tester(watcher)
+tester   = new Tester(dir)
 
-
+compiler.on('ready', tester.start)
+compiler.start()
 
 #
 #app = express()
