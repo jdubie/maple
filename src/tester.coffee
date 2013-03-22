@@ -79,9 +79,15 @@ exports = module.exports = class Tester extends events.EventEmitter
       async.map(files, @testFile, callback)
 
   testFile: (file, callback) =>
-    mocha = cp.spawn 'mocha', [file]
-    mocha.on 'data', (data) ->
-      console.log data
+    file = @testName(file)
+    debug "testing #{file}"
+
+    args = [
+      '--reporter', 'json-stream'
+      file
+    ]
+    mocha = cp.spawn 'mocha', args
+    mocha.stdout.on('data', @parseOut(file))
     mocha.on 'exit', (status) ->
       debug 'mocha exit', status
       callback()
@@ -139,9 +145,22 @@ exports = module.exports = class Tester extends events.EventEmitter
     false
 
   event: (eventname, args...) ->
-    debug "#{eventname}: #{args[0]}"
+    switch eventname
+      when 'ready' then debug 'ready'
+      when 'pass', 'fail'
+        debug eventname, args[1], args[0]
+      else
+        debug "#{eventname}: #{args[0]}"
     @emit(eventname, args...)
 
+  parseOut: (file) =>
+    (data) =>
+      data = data.toString('utf8')
+      msgs = data.split('\n')
+      msgs = msgs.map (msg) -> JSON.parse(msg)
+      #debug 'msg', msgs
+      for msg in msgs
+        @event(msg[0], msg[1], file) if msg[0] in ['pass', 'fail']
 
   relName: (filename) ->
     h.relName({filename, @dir})
