@@ -14,6 +14,7 @@
     "should": "~1.2.2",
     "module-deps": "~0.5.2",
     "defaultdict": "git://github.com/jdubie/defaultdict.git",
-    "set": "git://github.com/jdubie/set.git"
+    "set": "git://github.com/jdubie/set.git",
+    "docco": "~0.6.2"
   }
 }

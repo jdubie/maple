@@ -88,9 +88,7 @@ exports = module.exports = class Tester extends events.EventEmitter
     ]
     mocha = cp.spawn 'mocha', args
     mocha.stdout.on('data', @parseOut(file))
-    mocha.on 'exit', (status) ->
-      debug 'mocha exit', status
-      callback()
+    mocha.on('exit', callback)
 
     # TODO get this working without child process
 
@@ -148,6 +146,7 @@ exports = module.exports = class Tester extends events.EventEmitter
     switch eventname
       when 'ready' then debug 'ready'
       when 'pass', 'fail'
+        # TODO refactor this
         debug eventname, args[1], args[0]
       else
         debug "#{eventname}: #{args[0]}"
