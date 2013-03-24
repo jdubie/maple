@@ -1,25 +1,28 @@
 fs           = require 'fs'
+events       = require 'events'
 path         = require 'path'
 mkdirp       = require 'mkdirp'
-watch        = require 'node-watch'
 CoffeeScript = require 'coffee-script'
 debug        = require 'debug'
 findit       = require 'findit'
 _            = require 'underscore'
 
-debug = debug('compiler')
+debug = debug('maple/compiler')
 
-exports = module.exports = class Compiler
-  constructor: (@dir, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
+exports = module.exports = class Compiler extends events.EventEmitter
+  constructor: (@dir, @watcher, @include=/.*\.coffee$/, @exclude=/node_modules/) ->
 
-    # create lib dir
-    mkdirp.sync(path.join(@dir, 'lib'))
+  event: (eventname, args...) ->
+    debug("#{eventname}: #{args.join(' ')}")
+    @emit(eventname, args)
 
+  start: ->
     # compile everything in beginning
-    @compileAll()
+    @compileAll =>
+      @event('ready')
 
     # watch everything
-    watch(@dir, @compile)
+    @watcher.on('change', @compile)
 
   compileAll: (callback) ->
     @findSourceFiles (err, files) =>
@@ -37,7 +40,7 @@ exports = module.exports = class Compiler
     return unless @validFile(file)
 
     if fs.existsSync(file)
-      debug "compiling: #{@relPath(file)}"
+      @event('compiled', @relPath(file))
       coffee = fs.readFileSync(file, 'utf8')
       js = CoffeeScript.compile(coffee)
       dst = @getLibPath(file)
@@ -50,8 +53,14 @@ exports = module.exports = class Compiler
   getLibPath: (file) ->
     relPath = file.split(@dir)[1]
     srcPath = relPath.split(path.sep)[2..].join(path.sep)
-    dstPath = path.join(@dir, 'lib', srcPath)
+    dstPath = path.join(@dir, Compiler.getLib(relPath), srcPath)
     path.join(path.dirname(dstPath), path.basename(dstPath, '.coffee') + '.js')
+
+  @getLib: (file) ->
+    switch file.split(path.sep)[1]
+      when 'src' then 'lib'
+      when 'test_src' then 'test'
+      else throw new Error("invalid folder: #{file}")
 
   findSourceFiles: (callback) ->
     files = []
