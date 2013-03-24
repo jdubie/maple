@@ -1,27 +1,27 @@
-fs        = require 'fs'
-path      = require 'path'
-mocha     = require 'mocha'
-express   = require 'express'
-commander = require 'commander'
-debug     = require 'debug'
-Watcher   = require './watcher'
-Tester    = require './tester'
-Compiler  = require './compiler'
+    fs        = require 'fs'
+    path      = require 'path'
+    mocha     = require 'mocha'
+    express   = require 'express'
+    commander = require 'commander'
+    debug     = require 'debug'
+    Watcher   = require './watcher'
+    Tester    = require './tester'
+    Compiler  = require './compiler'
 
-debug = debug('maple/main')
+    debug = debug('maple/main')
 
-dir = process.argv[2] ? process.cwd()
+    dir = process.argv[2] ? process.cwd()
 
-unless fs.existsSync(dir)
-  console.error "Path does not exist: #{dir}"
-  process.exit()
+    unless fs.existsSync(dir)
+      console.error "Path does not exist: #{dir}"
+      process.exit()
 
-watcher  = new Watcher(dir)
-compiler = new Compiler(dir, watcher)
-tester   = new Tester(dir, watcher)
+    watcher  = new Watcher(dir)
+    compiler = new Compiler(dir, watcher)
+    tester   = new Tester(dir, watcher)
 
-compiler.on('ready', tester.start)
-compiler.start()
+    compiler.on('ready', tester.start)
+    compiler.start()
 
 #
 #app = express()

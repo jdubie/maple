@@ -1,4 +1,5 @@
 Compiler = require('../lib/compiler')
+should = require('should')
 
 describe 'Compiler', ->
   describe '#testName', ->
@@ -13,3 +14,8 @@ describe 'Compiler', ->
     #  p.should.eql '/home/user/maple/test_lib/file.js'
     #describe '@getLib', ->
     #  Compiler.getLib(
+
+  describe '#validFile', ->
+    it 'should work for .litcoffee files', ->
+      c = new Compiler
+      c.validFile('test.litcoffee').should.eql true
