@@ -10,4 +10,9 @@ build:
 clean:
 	rm -rf lib test
 
+test: build run-tests
+
+run-tests:
+	mocha
+
 .PHONY: test

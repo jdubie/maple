@@ -155,15 +155,22 @@ run tests as things change
         return true if file.match(@include)
         false
 
-      event: (eventname, args...) ->
+This function both logs and formats and emits events for be consumed by browser
+
+      event: (eventname, args...) =>
         switch eventname
           when 'ready' then debug 'ready'
-          when 'pass', 'fail'
-            # TODO emit this cleaner
-            debug eventname, args[1]#, args[0]
+          when 'pass'
+            name = @nameFromTest(args[1])
+            debug eventname, name
+            @emit eventname, name
+          when 'fail'
+            # DO something different
           else
             debug "#{eventname}: #{args[0]}"
-        @emit(eventname, args...)
+            #@emit(eventname, args...)
+
+This file should emit events to be consumed by browser api
 
       parseOut: (file) =>
         (data) =>
@@ -173,6 +180,15 @@ run tests as things change
           msgs = msgs.map (msg) -> JSON.parse(msg)
           for msg in msgs
             @event(msg[0], msg[1], file) if msg[0] in ['pass', 'fail']
+
+This function takes `'test/main.js' -> 'main'`
+
+      nameFromTest: (name) ->
+        name = name.split(path.sep)
+        name = name.filter (elem) -> elem.length > 0 # remove leading /
+        name = name[1..] # remove test
+        name[name.length - 1] = path.basename(name[name.length - 1], '.js')
+        name.join(path.sep)
 
       relName: (filename) ->
         h.relName({filename, @dir})
