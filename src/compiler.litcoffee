@@ -39,7 +39,10 @@ including filenames matching `@include`
 
 
       event: (eventname, args...) ->
-        debug("#{eventname}: #{args.join(' ')}")
+        switch eventname
+          when 'ready' then debug 'ready'
+          else
+            debug("#{eventname}: #{args.join(' ')}")
         @emit(eventname, args)
 
 compile everything in beginning
@@ -97,9 +100,4 @@ watch everything
           else throw new Error("invalid folder: #{file}")
 
       findSourceFiles: (callback) ->
-        files = []
-        finder = findit.find(@dir)
-        finder.on 'file', (file, stat) ->
-          files.push(file)
-        finder.on 'end', ->
-          callback(null, files)
+        h.findFiles({@dir, @validFile}, callback)

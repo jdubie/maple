@@ -161,8 +161,10 @@ This function both logs and formats and emits events for be consumed by browser
         switch eventname
           when 'ready' then debug 'ready'
           when 'pass'
-            name = @nameFromTest(args[1])
-            debug eventname, name
+            debug 'args[0]', args[0]
+            fileExport = @exportFromResult(args[0])
+            file = @fileFromTest(args[1])
+            debug "#{eventname}: #{name}"
             @emit eventname, name
           when 'fail'
             # DO something different
@@ -182,6 +184,8 @@ This file should emit events to be consumed by browser api
             @event(msg[0], msg[1], file) if msg[0] in ['pass', 'fail']
 
 This function takes `'test/main.js' -> 'main'`
+param `String` - `name`
+return `String`
 
       nameFromTest: (name) ->
         name = name.split(path.sep)
@@ -189,6 +193,13 @@ This function takes `'test/main.js' -> 'main'`
         name = name[1..] # remove test
         name[name.length - 1] = path.basename(name[name.length - 1], '.js')
         name.join(path.sep)
+
+This function 
+param `Object`
+
+
+      exportFromResult: () ->
+        # TODO implement this
 
       relName: (filename) ->
         h.relName({filename, @dir})

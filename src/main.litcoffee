@@ -1,12 +1,13 @@
-    fs        = require 'fs'
-    path      = require 'path'
-    mocha     = require 'mocha'
-    express   = require 'express'
-    commander = require 'commander'
-    debug     = require 'debug'
-    Watcher   = require './watcher'
-    Tester    = require './tester'
-    Compiler  = require './compiler'
+    fs         = require 'fs'
+    path       = require 'path'
+    mocha      = require 'mocha'
+    express    = require 'express'
+    commander  = require 'commander'
+    debug      = require 'debug'
+    Watcher    = require './watcher'
+    Tester     = require './tester'
+    Compiler   = require './compiler'
+    Documenter = require './documenter'
 
     debug = debug('maple/main')
 
@@ -16,16 +17,28 @@
       console.error "Path does not exist: #{dir}"
       process.exit()
 
-    watcher  = new Watcher(dir)
-    compiler = new Compiler(dir, watcher)
-    tester   = new Tester(dir, watcher)
+      #watcher  = new Watcher(dir)
+      #compiler = new Compiler(dir, watcher)
+      #tester   = new Tester(dir, watcher)
 
-    compiler.on('ready', tester.start)
-    compiler.start()
+      #compiler.on('ready', tester.start)
+      #compiler.start()
 
-#
-#app = express()
-#app.use express.static path.join(__dirname, 'public')
+    documenter = new Documenter(dir)
+
+Start HTTP server
+
+    app = express()
+    app.use express.static path.join(__dirname, '..', 'public')
+
+    app.get '/modules/:id', (req, res) ->
+      name = req.params.id
+      htmlFile = path.join('docs', name + '.html')
+      html = fs.readFileSync(htmlFile, 'utf8')
+      res.json(module: {name, html})
+
+    app.listen(3000)
+
 #
 #app.get '/tests', (req, res, next) ->
 #
