@@ -21,7 +21,7 @@ Require dependencies
         h.findFiles {@dir, @validFile}, (err, files) =>
           files = files.map (file) => @relPath(file)
           debug 'files', files
-
+          @files = files
           args = files
           docco.document({args, template: path.join(__dirname, '..', 'views', 'linear.jst') })
 

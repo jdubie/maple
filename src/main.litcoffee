@@ -1,6 +1,7 @@
     fs         = require 'fs'
     path       = require 'path'
     mocha      = require 'mocha'
+    async      = require 'async'
     express    = require 'express'
     commander  = require 'commander'
     debug      = require 'debug'
@@ -31,11 +32,27 @@ Start HTTP server
     app = express()
     app.use express.static path.join(__dirname, '..', 'public')
 
+    htmlForName = (name, callback) ->
+      htmlFile = path.join('docs', name + '.html')
+      fs.readFile(htmlFile, 'utf8', callback)
+
     app.get '/modules/:id', (req, res) ->
       name = req.params.id
-      htmlFile = path.join('docs', name + '.html')
-      html = fs.readFileSync(htmlFile, 'utf8')
-      res.json(module: {name, html})
+      htmlForName name, (err, html) ->
+        res.json(module: {name, html})
+
+    app.get '/modules', (req, res) ->
+      files = documenter.files.map (file) ->
+        file = file.split(path.sep)[1..].join(path.sep)
+        file = file.split('.')[0]
+      debug 'files', files
+      async.map files, htmlForName, (err, htmls) ->
+        modules = []
+        for i in [0...files.length]
+          html = htmls[i]
+          name = files[i]
+          modules.push {html, name}
+        res.json({modules})
 
     app.listen(3000)
 
