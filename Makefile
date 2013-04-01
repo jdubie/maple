@@ -8,7 +8,7 @@ build:
 	coffee -o test -c test_src
 
 clean:
-	rm -rf lib test
+	rm -rf lib test docs
 
 test: build run-tests
 

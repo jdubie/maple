@@ -23,7 +23,11 @@ Require dependencies
           debug 'files', files
           @files = files
           args = files
-          docco.document({args, template: path.join(__dirname, '..', 'views', 'linear.jst') })
+          docco.document({
+            args
+            output: 'docs/src'
+            template: path.join(__dirname, '..', 'views', 'linear.jst')
+          })
 
       validFile: (file) =>
         return false if file.match(@exclude)

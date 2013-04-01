@@ -5,6 +5,7 @@
     express    = require 'express'
     commander  = require 'commander'
     debug      = require 'debug'
+    h          = require './helper'
     Watcher    = require './watcher'
     Tester     = require './tester'
     Compiler   = require './compiler'
@@ -33,6 +34,7 @@ Start HTTP server
     app.use express.static path.join(__dirname, '..', 'public')
 
     htmlForName = (name, callback) ->
+      name = h.deserializePath(name)
       htmlFile = path.join('docs', name + '.html')
       fs.readFile(htmlFile, 'utf8', callback)
 
@@ -42,10 +44,12 @@ Start HTTP server
         res.json(module: {name, html})
 
     app.get '/modules', (req, res) ->
-      files = documenter.files.map (file) ->
-        file = file.split(path.sep)[1..].join(path.sep)
-        file = file.split('.')[0]
+      files = documenter.files.map(h.relName(dir))
+      files = files.map(h.removeExt)
+      files = files.map(h.serializePath)
+
       debug 'files', files
+
       async.map files, htmlForName, (err, htmls) ->
         modules = []
         for i in [0...files.length]

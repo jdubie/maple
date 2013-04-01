@@ -16,6 +16,7 @@ Require dependencies
     debug        = require 'debug'
     findit       = require 'findit'
     _            = require 'underscore'
+    h            = require './helper'
 
 Debug to stdout
 
